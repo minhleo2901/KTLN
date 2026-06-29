@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="vi" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Econometrics Dashboard | Báo Cáo Phân Tích Kinh Tế Lượng</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M3 3V21H21" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M18.5 7.5L14.5 12.5L10.5 9.5L6.5 14.5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        <circle cx="18.5" cy="7.5" r="1.5" fill="currentColor"/>
+                        <circle cx="14.5" cy="12.5" r="1.5" fill="currentColor"/>
+                        <circle cx="10.5" cy="9.5" r="1.5" fill="currentColor"/>
+                        <circle cx="6.5" cy="14.5" r="1.5" fill="currentColor"/>
+                    </svg>
+                    <span>EconoMetrics</span>
+                </div>
+                <p class="tagline">Phân tích liên kết & tác động</p>
+            </div>
+
+            <!-- Upload Area inside Sidebar -->
+            <div class="sidebar-upload">
+                <div class="drop-zone" id="drop-zone">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="17 8 12 3 7 8"/>
+                        <line x1="12" y1="3" x2="12" y2="15"/>
+                    </svg>
+                    <p class="drop-text">Kéo thả file log (.txt) hoặc</p>
+                    <label class="file-label">
+                        <span>Chọn File</span>
+                        <input type="file" id="file-input" accept=".txt">
+                    </label>
+                    <span class="file-name" id="selected-file-name">Mặc định: Report-1.txt</span>
+                </div>
+            </div>
+
+            <!-- Navigation Links -->
+            <nav class="sidebar-nav">
+                <ul>
+                    <li class="nav-item active" data-section="section-overview">
+                        <a href="#overview">
+                            <span class="icon">📊</span> Tổng quan báo cáo
+                        </a>
+                    </li>
+                    <li class="nav-item" data-section="section-stationarity">
+                        <a href="#stationarity">
+                            <span class="icon">📈</span> Kiểm định tính dừng (ADF)
+                        </a>
+                    </li>
+                    <li class="nav-item" data-section="section-johansen">
+                        <a href="#johansen">
+                            <span class="icon">⛓️</span> Đồng liên kết (Johansen)
+                        </a>
+                    </li>
+                    <li class="nav-item" data-section="section-regression">
+                        <a href="#regression">
+                            <span class="icon">📉</span> OLS & ECM (Engle-Granger)
+                        </a>
+                    </li>
+                    <li class="nav-item" data-section="section-diagnostics">
+                        <a href="#diagnostics">
+                            <span class="icon">🔬</span> VIF & Chẩn đoán mô hình
+                        </a>
+                    </li>
+                    <li class="nav-item" data-section="section-vecm">
+                        <a href="#vecm">
+                            <span class="icon">⚙️</span> Mô hình VECM chi tiết
+                        </a>
+                    </li>
+                    <li class="nav-item" data-section="section-granger">
+                        <a href="#granger">
+                            <span class="icon">⚡</span> Nhân quả Granger Matrix
+                        </a>
+                    </li>
+                    <li class="nav-item" data-section="section-fevd">
+                        <a href="#fevd">
+                            <span class="icon">🧱</span> Phân rã phương sai (FEVD)
+                        </a>
+                    </li>
+                    <li class="nav-item" data-section="section-raw">
+                        <a href="#raw">
+                            <span class="icon">📄</span> Xem file log gốc
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+            <div class="sidebar-footer">
+                <p>&copy; 2026 EconoMetrics Dashboard</p>
+                <p>Thiết kế cao cấp • Tiêu chuẩn nghiên cứu</p>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Header bar -->
+            <header class="main-header">
+                <div class="header-title">
+                    <h1 id="report-title">BÁO CÁO CHI TIẾT PHÂN TÍCH KINH TẾ LƯỢNG</h1>
+                    <span class="badge badge-success" id="report-status">Sẵn sàng</span>
+                </div>
+                <div class="header-controls">
+                    <button class="theme-toggle-btn" id="theme-toggle" title="Chuyển chế độ sáng/tối">
+                        <!-- Sun Icon (Dark Mode active, show sun to switch to light) -->
+                        <svg class="sun-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="5"/>
+                            <line x1="12" y1="1" x2="12" y2="3"/>
+                            <line x1="12" y1="21" x2="12" y2="23"/>
+                            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+                            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+                            <line x1="1" y1="12" x2="3" y2="12"/>
+                            <line x1="21" y1="12" x2="23" y2="12"/>
+                            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+                            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+                        </svg>
+                        <!-- Moon Icon (Light Mode active) -->
+                        <svg class="moon-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+                            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                        </svg>
+                    </button>
+                </div>
+            </header>
+
+            <div class="content-body">
+                
+                <!-- SECTION 1: OVERVIEW -->
+                <section id="section-overview" class="dashboard-section active">
+                    <div class="section-header">
+                        <h2>Tổng quan kết quả nghiên cứu</h2>
+                        <p>Các chỉ số thống kê then chốt của mô hình OLS Dài hạn & Ngắn hạn (ECM)</p>
+                    </div>
+
+                    <!-- Summary Grid Cards -->
+                    <div class="metrics-grid">
+                        <div class="metric-card gradient-blue">
+                            <div class="metric-info">
+                                <span class="metric-label">Hệ số R-squared dài hạn (Step 1)</span>
+                                <span class="metric-value" id="val-r2-long">0.000</span>
+                                <span class="metric-desc" id="val-adj-r2-long">Adj R2: 0.000</span>
+                            </div>
+                            <div class="metric-icon">📈</div>
+                        </div>
+                        <div class="metric-card gradient-purple">
+                            <div class="metric-info">
+                                <span class="metric-label">Hệ số R-squared ngắn hạn (ECM Step 2)</span>
+                                <span class="metric-value" id="val-r2-short">0.000</span>
+                                <span class="metric-desc" id="val-adj-r2-short">Adj R2: 0.000</span>
+                            </div>
+                            <div class="metric-icon">⚡</div>
+                        </div>
+                        <div class="metric-card gradient-indigo">
+                            <div class="metric-info">
+                                <span class="metric-label">Bậc đồng liên kết Johansen</span>
+                                <span class="metric-value" id="val-johansen-rank">0</span>
+                                <span class="metric-desc" id="val-johansen-desc">Hệ thống có mối quan hệ dài hạn</span>
+                            </div>
+                            <div class="metric-icon">⛓️</div>
+                        </div>
+                        <div class="metric-card gradient-emerald">
+                            <div class="metric-info">
+                                <span class="metric-label">Hệ số Hiệu chỉnh Sai số (ECT)</span>
+                                <span class="metric-value text-danger" id="val-ect-coef">-0.0000</span>
+                                <span class="metric-desc" id="val-ect-p">P-value: 0.000 (Có ý nghĩa)</span>
+                            </div>
+                            <div class="metric-icon">🔄</div>
+                        </div>
+                    </div>
+
+                    <!-- Key Insights Grid -->
+                    <div class="layout-grid-2">
+                        <div class="dashboard-card">
+                            <div class="card-header">
+                                <h3>💡 Kết Luận Thống Kê Chính</h3>
+                            </div>
+                            <div class="card-body">
+                                <ul class="insight-list" id="insight-list">
+                                    <!-- Populated by JS -->
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <div class="dashboard-card">
+                            <div class="card-header">
+                                <h3>📊 Biến Phụ Thuộc & Các Biến Giải Thích</h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="variables-table-container">
+                                    <table class="premium-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Vai trò</th>
+                                                <th>Tên biến</th>
+                                                <th>Ý nghĩa kinh tế tế vĩ mô</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td><span class="role-badge role-dep">Phụ thuộc</span></td>
+                                                <td><code>ln_vn_index</code> / <code>dln_vn_index</code></td>
+                                                <td>Logarit Chỉ số Chứng khoán VN-Index (Mức / Sai phân)</td>
+                                            </tr>
+                                            <tr>
+                                                <td rowspan="7"><span class="role-badge role-indep">Độc lập (Kinh tế)</span></td>
+                                                <td><code>ln_usd_vnd</code></td>
+                                                <td>Tỷ giá USD/VND (Thị trường ngoại hối)</td>
+                                            </tr>
+                                            <tr>
+                                                <td><code>ln_brent</code></td>
+                                                <td>Giá dầu Brent thế giới (Năng lượng)</td>
+                                            </tr>
+                                            <tr>
+                                                <td><code>ln_sp500</code></td>
+                                                <td>Chỉ số S&P 500 của Mỹ (Chứng khoán toàn cầu)</td>
+                                            </tr>
+                                            <tr>
+                                                <td><code>ln_vndibor</code></td>
+                                                <td>Lãi suất liên ngân hàng VNDIBOR (Thanh khoản nội địa)</td>
+                                            </tr>
+                                            <tr>
+                                                <td><code>ln_M2_Value</code></td>
+                                                <td>Cung tiền M2 Việt Nam (Chính sách tiền tệ)</td>
+                                            </tr>
+                                            <tr>
+                                                <td><code>vix</code></td>
+                                                <td>Chỉ số đo lường trạng thái biến động VIX (Tâm lý rủi ro)</td>
+                                            </tr>
+                                            <tr>
+                                                <td><code>ln_cpi</code></td>
+                                                <td>Chỉ số Giá tiêu dùng CPI (Chỉ số lạm phát - dùng trong ADF)</td>
+                                            </tr>
+                                            <tr>
+                                                <td><span class="role-badge role-dummy">Biến giả (Dummy)</span></td>
+                                                <td colspan="2">
+                                                    <code>D_COVID_ACUTE</code> (Covid bùng phát), 
+                                                    <code>D_COVID_RECOVERY</code> (Phục hồi), 
+                                                    <code>D_RU_WAR</code> (Chiến tranh Nga-Ukraine), 
+                                                    <code>D_FED_HIKE</code> / <code>D_FED_CUT</code> (Tăng/giảm lãi suất Fed), 
+                                                    <code>D_TRUMP_TARIFF</code> (Thuế Trump)
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- SECTION 2: STATIONARITY (ADF) -->
+                <section id="section-stationarity" class="dashboard-section">
+                    <div class="section-header">
+                        <h2>Kiểm định tính dừng Augmented Dickey-Fuller (ADF)</h2>
+                        <p>Đánh giá tính dừng của các chuỗi thời gian ở dạng Gốc (Level) và Sai phân bậc 1 (Difference)</p>
+                    </div>
+
+                    <div class="layout-grid-3-7">
+                        <div class="dashboard-card">
+                            <div class="card-header">
+                                <h3>Quy tắc bác bỏ H₀</h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="rule-box">
+                                    <p><strong>H₀ (Giả thuyết không):</strong> Chuỗi thời gian chứa đơn vị gốc (Không dừng).</p>
+                                    <p><strong>Bác bỏ H₀ khi:</strong> <code>p-value &lt; 0.05</code> (Chuỗi dừng).</p>
+                                </div>
+                                <div class="adf-summary-box">
+                                    <p>Kết quả tối ưu cho hồi quy đồng liên kết là các biến dừng cùng bậc <code>I(1)</code>. Việc dừng ở <code>I(1)</code> cho phép kiểm định đồng liên kết Johansen và xây dựng mô hình ECM.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="dashboard-card">
+                            <div class="card-header flex-header">
+                                <h3>Chi tiết p-value ADF</h3>
+                                <div class="chart-legend-custom">
+                                    <span class="legend-dot lvl"></span> Gốc (Level)
+                                    <span class="legend-dot diff"></span> Sai phân (Diff 1)
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="chart-container" style="height: 300px; position: relative;">
+                                    <canvas id="adf-chart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-card margin-top">
+                        <div class="card-header">
+                            <h3>Bảng số liệu kiểm định ADF chi tiết</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-container">
+                                <table class="premium-table" id="adf-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Biến số</th>
+                                            <th>P-value mức gốc (Level)</th>
+                                            <th>Trạng thái (Level)</th>
+                                            <th>P-value sai phân (Diff 1)</th>
+                                            <th>Trạng thái (Diff 1)</th>
+                                            <th>Kết luận bậc tích hợp</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- Populated by JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- SECTION 3: JOHANSEN COINTEGRATION -->
+                <section id="section-johansen" class="dashboard-section">
+                    <div class="section-header">
+                        <h2>Kiểm định Đồng liên kết Johansen</h2>
+                        <p>Xác định số lượng mối quan hệ cân bằng dài hạn giữa các biến số vĩ mô</p>
+                    </div>
+
+                    <div class="layout-grid-2">
+                        <div class="dashboard-card">
+                            <div class="card-header">
+                                <h3>Biểu đồ Trace Statistic vs Giá trị Tới hạn</h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="chart-container" style="height: 300px; position: relative;">
+                                    <canvas id="johansen-chart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="dashboard-card">
+                            <div class="card-header">
+                                <h3>Bảng thông số Johansen & Kết luận bậc Rank</h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-container">
+                                    <table class="premium-table" id="johansen-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Giả thuyết không (H₀)</th>
+                                                <th>Trace Statistic</th>
+                                                <th>Critical Value 90%</th>
+                                                <th>Critical Value 95%</th>
+                                                <th>Critical Value 99%</th>
+                                                <th>Ý nghĩa (95%)</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <!-- Populated by JS -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="highlight-info-box margin-top">
+                                    <h4>Bậc đồng liên kết xác định (Confirmed Rank): <span id="johansen-rank-badge" class="badge">2</span></h4>
+                                    <p id="johansen-rank-explanation">Với Rank = 2, tồn tại 2 mối quan hệ cân bằng dài hạn độc lập giữa các biến số. Hệ thống hồi quy dạng VECM hoặc hồi quy Engle-Granger 2 bước là phù hợp.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- SECTION 4: REGRESSION (OLS & ECM) -->
+                <section id="section-regression" class="dashboard-section">
+                    <div class="section-header">
+                        <h2>Mô hình Engle-Granger 2 bước (Hồi quy Dài hạn & Sai số ECM)</h2>
+                        <p>Kiểm nghiệm mối liên hệ cân bằng trong dài hạn và khả năng tự điều chỉnh trong ngắn hạn</p>
+                    </div>
+
+                    <div class="tab-control-container">
+                        <button class="tab-btn active" data-tab="tab-longrun">Bước 1: Hồi quy Dài hạn (Long-run OLS)</button>
+                        <button class="tab-btn" data-tab="tab-shortrun">Bước 2: Hồi quy Ngắn hạn (Short-run ECM)</button>
+                    </div>
+
+                    <!-- TAB 1: LONG RUN REGRESSION -->
+                    <div id="tab-longrun" class="tab-pane active">
+                        <div class="layout-grid-2">
+                            <div class="dashboard-card">
+                                <div class="card-header">
+                                    <h3>Chỉ số chất lượng mô hình (OLS dài hạn)</h3>
+                                </div>
+                                <div class="card-body">
+                                    <div class="metrics-subgrid">
+                                        <div class="sub-metric">
+                                            <span class="label">R-squared</span>
+                                            <span class="value" id="long-r2">0.000</span>
+                                        </div>
+                                        <div class="sub-metric">
+                                            <span class="label">Adj. R-squared</span>
+                                            <span class="value" id="long-adj-r2">0.000</span>
+                                        </div>
+                                        <div class="sub-metric">
+                                            <span class="label">F-statistic</span>
+                                            <span class="value" id="long-f">0.00</span>
+                                        </div>
+                                        <div class="sub-metric">
+                                            <span class="label">Prob (F-stat)</span>
+                                            <span class="value" id="long-prob-f">0.00e-00</span>
+                                        </div>
+                                        <div class="sub-metric">
+                                            <span class="label">AIC / BIC</span>
+                                            <span class="value" id="long-aic-bic">0.00 / 0.00</span>
+                                        </div>
+                                        <div class="sub-metric">
+                                            <span class="label">Durbin-Watson</span>
+                                            <span class="value" id="long-dw">0.00</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="residuals-box margin-top" id="long-residuals-check">
+                                        <h4>Kiểm định tính dừng của phần dư (ADF Residuals):</h4>
+                                        <p class="stat-line">t-stat: <strong id="long-resid-tstat">0.00</strong> | p-value: <strong id="long-resid-p">0.000</strong></p>
+                                        <p class="resid-desc" id="long-resid-desc">Phần dư có dừng không? Bác bỏ giả thuyết không ở mức ý nghĩa nào?</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="dashboard-card">
+                                <div class="card-header">
+                                    <h3>Hệ số tác động dài hạn (Coefficients)</h3>
+                                </div>
+                                <div class="card-body">
+                                    <div class="chart-container" style="height: 300px; position: relative;">
+                                        <canvas id="longrun-coef-chart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="dashboard-card margin-top">
+                            <div class="card-header">
+                                <h3>Chi tiết bảng hệ số hồi quy dài hạn</h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-container">
+                                    <table class="premium-table" id="longrun-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Biến</th>
+                                                <th>Hệ số (coef)</th>
+                                                <th>Sai số chuẩn (std err)</th>
+                                                <th>t-statistic</th>
+                                                <th>P>|t|</th>
+                                                <th>Khoảng tin cậy 95%</th>
+                                                <th>Mức độ ý nghĩa</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <!-- Populated by JS -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TAB 2: SHORT RUN ECM -->
+                    <div id="tab-shortrun" class="tab-pane">
+                        <div class="layout-grid-2">
+                            <div class="dashboard-card">
+                                <div class="card-header">
+                                    <h3>Chỉ số chất lượng mô hình ngắn hạn (ECM)</h3>
+                                </div>
+                                <div class="card-body">
+                                    <div class="metrics-subgrid">
+                                        <div class="sub-metric">
+                                            <span class="label">R-squared</span>
+                                            <span class="value" id="short-r2">0.000</span>
+                                        </div>
+                                        <div class="sub-metric">
+                                            <span class="label">Adj. R-squared</span>
+                                            <span class="value" id="short-adj-r2">0.000</span>
+                                        </div>
+                                        <div class="sub-metric">
+                                            <span class="label">F-statistic</span>
+                                            <span class="value" id="short-f">0.00</span>
+                                        </div>
+                                        <div class="sub-metric">
+                                            <span class="label">Prob (F-stat)</span>
+                                            <span class="value" id="short-prob-f">0.00e-00</span>
+                                        </div>
+                                        <div class="sub-metric">
+                                            <span class="label">AIC / BIC</span>
+                                            <span class="value" id="short-aic-bic">0.00 / 0.00</span>
+                                        </div>
+                                        <div class="sub-metric">
+                                            <span class="label">Durbin-Watson</span>
+                                            <span class="value" id="short-dw">0.00</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="ect-indicator margin-top" id="ect-analysis-box">
+                                        <h4>Phân tích Hệ số Hiệu chỉnh Sai số (ECT_lag1):</h4>
+                                        <div class="ect-badge-row">
+                                            <span class="badge" id="ect-value-badge">-0.0000</span>
+                                            <span class="badge badge-success" id="ect-sig-badge">Có ý nghĩa (p < 0.05)</span>
+                                        </div>
+                                        <p class="ect-explanation" id="ect-explanation-text">Hệ số ECT âm và có ý nghĩa thống kê xác nhận mối quan hệ đồng liên kết dài hạn thực sự tồn tại. Mỗi kỳ (tháng/quý), mô hình sẽ tự điều chỉnh bao nhiêu % sai lệch để quay về quỹ đạo cân bằng dài hạn.</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="dashboard-card">
+                                <div class="card-header">
+                                    <h3>Hệ số tác động ngắn hạn & Biến giả chính sách (Coefficients)</h3>
+                                </div>
+                                <div class="card-body">
+                                    <div class="chart-container" style="height: 300px; position: relative;">
+                                        <canvas id="shortrun-coef-chart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="dashboard-card margin-top">
+                            <div class="card-header">
+                                <h3>Chi tiết bảng hệ số hồi quy sai phân ngắn hạn (ECM)</h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-container">
+                                    <table class="premium-table" id="shortrun-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Biến</th>
+                                                <th>Hệ số (coef)</th>
+                                                <th>Sai số chuẩn (std err)</th>
+                                                <th>z-statistic</th>
+                                                <th>P>|z|</th>
+                                                <th>Khoảng tin cậy 95%</th>
+                                                <th>Mức độ ý nghĩa</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <!-- Populated by JS -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- SECTION 5: VIF & DIAGNOSTICS -->
+                <section id="section-diagnostics" class="dashboard-section">
+                    <div class="section-header">
+                        <h2>Chẩn đoán phần dư & Đa cộng tuyến (VIF)</h2>
+                        <p>Xác minh các giả định cốt lõi của mô hình hồi quy OLS nhằm bảo đảm ước lượng không chệch hiệu quả</p>
+                    </div>
+
+                    <div class="layout-grid-2">
+                        <div class="dashboard-card">
+                            <div class="card-header">
+                                <h3>Hệ số phóng đại phương sai (VIF Results)</h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="chart-container" style="height: 300px; position: relative;">
+                                    <canvas id="vif-chart"></canvas>
+                                </div>
+                                <div class="vif-notes margin-top">
+                                    <p>💡 <strong>Gợi ý đọc:</strong> VIF &gt; 10 là dấu hiệu đa cộng tuyến nghiêm trọng. Đối với các biến dummy kinh tế vĩ mô trùng lặp thời kỳ (ví dụ chiến tranh, đợt tăng/giảm lãi suất liên tiếp), VIF cao là điều dễ hiểu và có thể chấp nhận được do tính chất thời kỳ.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="dashboard-card">
+                            <div class="card-header">
+                                <h3>Kiểm định giả thuyết phần dư (Diagnostics)</h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="diagnostics-list" id="diagnostics-list">
+                                    <!-- Populated by JS -->
+                                </div>
+
+                                <div class="diagnostic-explanation-card margin-top">
+                                    <h4>Ý nghĩa các kiểm định phần dư:</h4>
+                                    <ul class="simple-list">
+                                        <li><strong>Ljung-Box / Breusch-Godfrey (Autocorrelation):</strong> H₀: Không có tự tương quan phần dư. Kỳ vọng p &gt; 0.05.</li>
+                                        <li><strong>Breusch-Pagan (Heteroscedasticity):</strong> H₀: Phương sai phần dư đồng đều. Kỳ vọng p &gt; 0.05.</li>
+                                        <li><strong>Jarque-Bera (Normality):</strong> H₀: Phần dư phân phối chuẩn. Kỳ vọng p &gt; 0.05.</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- SECTION 6: VECM CHI TIẾT -->
+                <section id="section-vecm" class="dashboard-section">
+                    <div class="section-header">
+                        <h2>Mô hình Vectơ Hiệu chỉnh Sai số (VECM)</h2>
+                        <p>Xem xét hệ số tác động trễ (Lagged Endogenous) và tốc độ điều chỉnh cân bằng (Alpha) của hệ phương trình đồng thời</p>
+                    </div>
+
+                    <div class="dashboard-card">
+                        <div class="card-header">
+                            <h3>Lựa chọn Phương trình VECM để phân tích</h3>
+                            <div class="custom-select-wrapper">
+                                <select id="vecm-eq-selector" class="premium-select">
+                                    <!-- Populated by JS -->
+                                </select>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="layout-grid-2">
+                                <div>
+                                    <h4>1. Tác động của các biến trễ (Lagged parameters)</h4>
+                                    <div class="table-container">
+                                        <table class="premium-table" id="vecm-lagged-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Biến trễ</th>
+                                                    <th>Hệ số (coef)</th>
+                                                    <th>Sai số chuẩn</th>
+                                                    <th>z-statistic</th>
+                                                    <th>P>|z|</th>
+                                                    <th>Ý nghĩa</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <!-- Populated by JS -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <h4>2. Tốc độ hiệu chỉnh sai số (Loading Coefficients - Alpha)</h4>
+                                    <div class="table-container">
+                                        <table class="premium-table" id="vecm-alpha-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Hệ số điều chỉnh</th>
+                                                    <th>Giá trị (coef)</th>
+                                                    <th>Sai số chuẩn</th>
+                                                    <th>z-statistic</th>
+                                                    <th>P>|z|</th>
+                                                    <th>Ý nghĩa</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <!-- Populated by JS -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <div class="highlight-info-box margin-top">
+                                        <p>Hệ số Alpha biểu thị tốc độ phản hồi của biến đối với độ lệch khỏi trạng thái cân bằng dài hạn. Trọng tâm là hệ số của biến <code>ln_vn_index</code>.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-card margin-top">
+                        <div class="card-header">
+                            <h3>Quan hệ đồng liên kết dài hạn (Cointegration Relations - Beta)</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="layout-grid-2">
+                                <div>
+                                    <h4>Cột quan hệ 1 (Cointegration Column 1 - Beta 1)</h4>
+                                    <div class="table-container">
+                                        <table class="premium-table" id="vecm-beta1-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Biến liên kết</th>
+                                                    <th>Hệ số Beta</th>
+                                                    <th>Sai số chuẩn</th>
+                                                    <th>z-statistic</th>
+                                                    <th>P>|z|</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <!-- Populated by JS -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div>
+                                    <h4>Cột quan hệ 2 (Cointegration Column 2 - Beta 2)</h4>
+                                    <div class="table-container">
+                                        <table class="premium-table" id="vecm-beta2-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Biến liên kết</th>
+                                                    <th>Hệ số Beta</th>
+                                                    <th>Sai số chuẩn</th>
+                                                    <th>z-statistic</th>
+                                                    <th>P>|z|</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <!-- Populated by JS -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- SECTION 7: GRANGER CAUSALITY MATRIX -->
+                <section id="section-granger" class="dashboard-section">
+                    <div class="section-header">
+                        <h2>Ma trận Quan hệ Nhân quả Granger (Granger Causality)</h2>
+                        <p>Xác định khả năng dự báo của một biến chuỗi thời gian đối với biến số khác (p-value)</p>
+                    </div>
+
+                    <div class="layout-grid-3-7">
+                        <div class="dashboard-card">
+                            <div class="card-header">
+                                <h3>Hướng dẫn đọc ma trận</h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="rule-box">
+                                    <p>Mối quan hệ <strong>Biến A → Biến B</strong> có ý nghĩa khi <code>p-value &lt; 0.05</code> (bác bỏ giả thuyết không: A không gây ra B theo nghĩa Granger).</p>
+                                </div>
+                                <div class="granger-legend">
+                                    <div class="legend-item"><span class="color-box sig-1"></span> Có ý nghĩa cao (p &lt; 0.01)</div>
+                                    <div class="legend-item"><span class="color-box sig-5"></span> Có ý nghĩa (0.01 &le; p &lt; 0.05)</div>
+                                    <div class="legend-item"><span class="color-box sig-10"></span> Ý nghĩa biên (0.05 &le; p &lt; 0.10)</div>
+                                    <div class="legend-item"><span class="color-box no-sig"></span> Không có ý nghĩa (p &ge; 0.10)</div>
+                                </div>
+
+                                <div class="granger-findings margin-top">
+                                    <h4>Mối quan hệ nhân quả phát hiện:</h4>
+                                    <ul id="granger-findings-list" class="simple-list">
+                                        <!-- Populated by JS -->
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="dashboard-card">
+                            <div class="card-header">
+                                <h3>Bản đồ Nhiệt Nhân quả Granger (Granger Causality Heatmap)</h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="granger-heatmap-container">
+                                    <div class="heatmap-axis-label vertical-label">BIẾN NGUỒN (XẢY RA TRƯỚC)</div>
+                                    <div class="heatmap-wrapper">
+                                        <div class="heatmap-axis-label horizontal-label">BIẾN ĐÍCH (BỊ TÁC ĐỘNG)</div>
+                                        <div class="heatmap-grid-scroll">
+                                            <div class="heatmap-grid" id="granger-heatmap">
+                                                <!-- Dynamic Heatmap grid created in JS -->
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- SECTION 8: VARIANCE DECOMPOSITION (FEVD) -->
+                <section id="section-fevd" class="dashboard-section">
+                    <div class="section-header">
+                        <h2>Phân rã phương sai sai số dự báo (FEVD)</h2>
+                        <p>Xác định tỷ lệ đóng góp của từng cú sốc nội sinh đối với biến động của các biến số theo các khoảng thời gian (Horizon từ 0 đến 23)</p>
+                    </div>
+
+                    <div class="dashboard-card">
+                        <div class="card-header flex-header">
+                            <h3>Biểu đồ Phân rã phương sai của biến:</h3>
+                            <div class="custom-select-wrapper">
+                                <select id="fevd-var-selector" class="premium-select">
+                                    <!-- Populated by JS -->
+                                </select>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="chart-container" style="height: 380px; position: relative;">
+                                <canvas id="fevd-chart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-card margin-top">
+                        <div class="card-header">
+                            <h3>Bảng số liệu phân rã phương sai chi tiết</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-container">
+                                <table class="premium-table" id="fevd-table">
+                                    <thead>
+                                        <tr id="fevd-table-header">
+                                            <th>Horizon (Kỳ)</th>
+                                            <!-- Dynamic headers based on variables -->
+                                        </tr>
+                                    </thead>
+                                    <tbody id="fevd-table-body">
+                                        <!-- Populated by JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- SECTION 9: RAW LOG -->
+                <section id="section-raw" class="dashboard-section">
+                    <div class="section-header">
+                        <h2>Xem chi tiết file log kết quả gốc</h2>
+                        <p>Hiển thị toàn bộ dữ liệu văn bản thô được phân tích bởi công cụ</p>
+                    </div>
+
+                    <div class="dashboard-card">
+                        <div class="card-header">
+                            <h3>Nội dung file: econometrics_full_report-1.txt</h3>
+                        </div>
+                        <div class="card-body">
+                            <pre class="raw-log-container" id="raw-log-content">
+                                <!-- Preloaded content here -->
+                            </pre>
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- Main JavaScript App Code -->
+    <script src="app.js"></script>
+</body>
+</html>
